@@ -1,38 +1,51 @@
 document.getElementById('orderForm').addEventListener('submit', function(event) {
-    event.preventDefault(); // предотвращаем стандартное поведение формы
+    event.preventDefault(); // Предотвращаем стандартное поведение формы
 
-    const formData = new FormData(this);
-    const number = formData.get('number');
-    const fio = formData.get('fio');
-    const adres = formData.get('adres');
-    const com = formData.get('com');
+    const phoneNumber = document.getElementById('recipient-name').value;
+    const fullName = document.getElementById('recipient-fio').value;
+    const address = document.getElementById('recipient-adres').value;
+    const comment = document.getElementById('message-text').value;
 
-    const message = `Новый заказ:\nКонтактный номер: ${number}\nФ.И.О: ${fio}\nАдрес доставки: ${adres}\nКомментарий: ${com}`;
+    const message = `Новый заказ:\nКонтактный номер: ${phoneNumber}\nФ.И.О: ${fullName}\nАдрес: ${address}\nКомментарий: ${comment}`;
 
-    const token = '7870385233:AAHOdLpZGxS50t2iy4u6r1b4H1QfdDelCCs'; // Замените на ваш токен
-    const chat_id = '751372500с'; // Замените на ваш ID чата
+    sendMessageToTelegram(message);
+});
 
-    fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
+function sendMessageToTelegram(text) {
+    const token = '7870385233:AAHOdLpZGxS50t2iy4u6r1b4H1QfdDelCCs'; // Замените на ваш токен бота
+    const chatId = '1063569134'; // Замените на ваш ID чата
+    const url = `https://api.telegram.org/bot${token}/sendMessage`;
+
+    const payload = {
+        chat_id: chatId,
+        text: text
+    };
+
+    fetch(url, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json'
         },
-        body: JSON.stringify({
-            chat_id: chat_id,
-            text: message,
-            parse_mode: 'HTML' // Опционально, если хотите использовать HTML-разметку
-        })
+        body: JSON.stringify(payload)
     })
-    .then(response => {
-        if (response.ok) {
-            alert('Заказ успешно отправлен!');
-            this.reset(); // сбрасываем форму
+    .then(response => response.json())
+    .then(data => {
+        if (data.ok) {
+            console.log('Сообщение отправлено успешно!');
+
+            // Показать модальное окно об успешном заказе
+            var successModal = new bootstrap.Modal(document.getElementById('successModal'));
+            successModal.show();
+
+            // Закрыть модальное окно заказа
+            var modal = bootstrap.Modal.getInstance(document.getElementById('exampleModal'));
+            modal.hide();
+
+            // Очистить форму после отправки
+            document.getElementById('orderForm').reset();
         } else {
-            alert('Произошла ошибка при отправке заказа.');
+            console.error('Ошибка при отправке сообщения:', data.description);
         }
     })
-    .catch(error => {
-        console.error('Ошибка:', error);
-        alert('Произошла ошибка при отправке заказа.');
-    });
-});
+    .catch(error => console.error('Ошибка:', error));
+}
